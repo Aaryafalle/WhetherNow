@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherNow - Real-time Weather Updates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to bottom right, #e6fffa, #e0f7fa);
+            color: #1a202c;
+        }
+
+        /* Navbar styles */
+        nav {
+            background: linear-gradient(to right, #14b8a6, #0891b2);
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .search-form {
+            display: flex;
+            width: 100%;
+            max-width: 24rem;
+            margin-left: 1rem;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.375rem 0 0 0.375rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .search-button {
+            background-color: white;
+            border: none;
+            border-radius: 0 0.375rem 0.375rem 0;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-button:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Main content styles */
+        main {
+            flex-grow: 1;
+            padding: 2rem 1rem;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 16rem;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 0.25rem solid #e2e8f0;
+            border-top-color: #14b8a6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            background-color: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 0.5rem;
+            color: #dc2626;
+            margin: 1rem 0;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .weather-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .weather-main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .location {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .date {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+        }
+
+        .weather-icon {
+            margin-bottom: 1rem;
+        }
+
+        .temperature {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .condition {
+            font-size: 1.25rem;
+            color: #4b5563;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            background-color: #f0fdfa;
+            border-radius: 0.5rem;
+        }
+
+        .detail-item svg {
+            margin-right: 0.5rem;
+        }
+
+        .air-quality-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 1rem;
+        }
+
+        .air-quality-item {
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .air-quality-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .air-quality-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .air-quality-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .progress-bg {
+            width: 100%;
+            height: 0.5rem;
+            background-color: #e5e7eb;
+            border-radius: 9999px;
+        }
+
+        .progress-bar {
+            height: 0.5rem;
+            border-radius: 9999px;
+        }
+
+        .progress-co {
+            background-color: #14b8a6;
+        }
+
+        .progress-no2 {
+            background-color: #3b82f6;
+        }
+
+        .progress-o3 {
+            background-color: #06b6d4;
+        }
+
+        .progress-pm25 {
+            background-color: #a855f7;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Footer styles */
+        footer {
+            background: linear-gradient(to right, #0d9488, #0e7490);
+            color: white;
+            padding: 1.5rem;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            .footer-content {
+                flex-direction: row;
+            }
+        }
+
+        .footer-logo {
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .footer-logo {
+                margin-bottom: 0;
+            }
+        }
+
+        .footer-logo h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .footer-logo p {
+            font-size: 0.875rem;
+            color: #99f6e4;
+        }
+
+        .footer-info {
+            font-size: 0.875rem;
+            color: #99f6e4;
+            text-align: center;
+        }
+
+        @media (min-width: 768px) {
+            .footer-info {
+                text-align: right;
+            }
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav>
+        <div class="container">
+            <div class="nav-content">
+                <h1 class="logo">WeatherNow</h1>
+                <form id="search-form" class="search-form">
+                    <input 
+                        type="text" 
+                        id="location-input" 
+                        class="search-input" 
+                        placeholder="Search location..." 
+                        aria-label="Search location"
+                    >
+                    <button type="submit" class="search-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <span class="sr-only">Search</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container" id="weather-container">
+            <!-- Content will be dynamically inserted here -->
+            <div class="empty-state">
+                <p>Enter a location to get weather information</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>WeatherNow</h2>
+                    <p>Get accurate weather forecasts anytime, anywhere.</p>
+                </div>
+                <div class="footer-info">
+                    <p>Data provided by WeatherAPI.com</p>
+                    <p>© <span id="current-year"></span> WeatherNow. Made By Aarya Falle</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Set current year in footer
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+
+        // DOM elements
+        const searchForm = document.getElementById('search-form');
+        const locationInput = document.getElementById('location-input');
+        const weatherContainer = document.getElementById('weather-container');
+
+        // Initial location
+        let currentLocation = 'London';
+
+        // Fetch weather data
+        async function fetchWeather(location) {
+            // Show loading spinner
+            weatherContainer.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(
+                    `http://api.weatherapi.com/v1/current.json?key=d67a2647854543728c3100229251205&q=${location}&aqi=yes`
+                );
+
+                if (!response.ok) {
+                    throw new Error('Location not found. Please try another location.');
+                }
+
+                const data = await response.json();
+                displayWeather(data);
+            } catch (error) {
+                weatherContainer.innerHTML = `
+                    <div class="error">
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Display weather data
+        function displayWeather(data) {
+            const { location, current } = data;
+            
+            // Format date
+            const date = new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Get weather icon
+            const weatherIcon = getWeatherIcon(current.condition.code);
+
+            // Create HTML for weather display
+            const weatherHTML = `
+                <div class="weather-grid">
+                    <div class="card">
+                        <div class="weather-main">
+                            <h2 class="location">${location.name}, ${location.country}</h2>
+                            <p class="date">${date}</p>
+                            
+                            <div class="weather-icon">
+                                ${weatherIcon}
+                            </div>
+                            
+                            <p class="temperature">${current.temp_c}°C</p>
+                            <p class="condition">${current.condition.text}</p>
+                            
+                            <div class="weather-details">
+                                <div class="detail-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"></path>
+                                        <path d="M9.6 4.6A2 2 0 1 1 11 8H2"></path>
+                                        <path d="M12.6 19.4A2 2 0 1 0 14 16H2"></path>
+                                    </svg>
+                                    <span>${current.wind_kph} km/h</span>
+                                </div>
+                                <div class="detail-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"></path>
+                                        <path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"></path>
+                                    </svg>
+                                    <span>${current.humidity}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3 class="air-quality-title">Air Quality</h3>
+                        ${current.air_quality ? `
+                            <div>
+                                <div class="air-quality-item">
+                                    <div class="air-quality-header">
+                                        <span class="air-quality-label">CO</span>
+                                        <span class="air-quality-value">${current.air_quality.co.toFixed(1)}</span>
+                                    </div>
+                                    <div class="progress-bg">
+                                        <div class="progress-bar progress-co" style="width: ${Math.min(100, (current.air_quality.co / 10) * 100)}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="air-quality-item">
+                                    <div class="air-quality-header">
+                                        <span class="air-quality-label">NO2</span>
+                                        <span class="air-quality-value">${current.air_quality.no2.toFixed(1)}</span>
+                                    </div>
+                                    <div class="progress-bg">
+                                        <div class="progress-bar progress-no2" style="width: ${Math.min(100, (current.air_quality.no2 / 100) * 100)}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="air-quality-item">
+                                    <div class="air-quality-header">
+                                        <span class="air-quality-label">O3</span>
+                                        <span class="air-quality-value">${current.air_quality.o3.toFixed(1)}</span>
+                                    </div>
+                                    <div class="progress-bg">
+                                        <div class="progress-bar progress-o3" style="width: ${Math.min(100, (current.air_quality.o3 / 100) * 100)}%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="air-quality-item">
+                                    <div class="air-quality-header">
+                                        <span class="air-quality-label">PM2.5</span>
+                                        <span class="air-quality-value">${current.air_quality.pm2_5.toFixed(1)}</span>
+                                    </div>
+                                    <div class="progress-bg">
+                                        <div class="progress-bar progress-pm25" style="width: ${Math.min(100, (current.air_quality.pm2_5 / 50) * 100)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <p>Air quality data not available</p>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            weatherContainer.innerHTML = weatherHTML;
+        }
+
+        // Get weather icon based on condition code
+        function getWeatherIcon(code) {
+            if (!code) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                `;
+            }
+
+            // Weather condition codes from WeatherAPI
+            if (code >= 1000 && code < 1003) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                `;
+            }
+            
+            if (code >= 1003 && code < 1063) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                    </svg>
+                `;
+            }
+            
+            if (code >= 1063 && code < 1189) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                        <path d="M16 14v6"></path>
+                        <path d="M8 14v6"></path>
+                        <path d="M12 16v6"></path>
+                    </svg>
+                `;
+            }
+            
+            if (code >= 1189 && code < 1237) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                        <path d="M16 14v6"></path>
+                        <path d="M8 14v6"></path>
+                        <path d="M12 16v6"></path>
+                    </svg>
+                `;
+            }
+            
+            if (code >= 1237 && code < 1282) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#bfdbfe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                        <path d="M8 15h.01"></path>
+                        <path d="M8 19h.01"></path>
+                        <path d="M12 17h.01"></path>
+                        <path d="M12 21h.01"></path>
+                        <path d="M16 15h.01"></path>
+                        <path d="M16 19h.01"></path>
+                    </svg>
+                `;
+            }
+            
+            if (code >= 1282) {
+                return `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path>
+                        <path d="m13 12-3 5h4l-3 5"></path>
+                    </svg>
+                `;
+            }
+            
+            return `
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                    <path d="M16 17.5c0 1.8-1.343 3.5-3 3.5s-3-1.7-3-3.5a3 3 0 0 1 6 0z"></path>
+                </svg>
+            `;
+        }
+
+        // Event listeners
+        searchForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const location = locationInput.value.trim();
+            if (location) {
+                currentLocation = location;
+                fetchWeather(location);
+            }
+        });
+
+        // Initial fetch
+        fetchWeather(currentLocation);
+    </script>
+</body>
+</html>
